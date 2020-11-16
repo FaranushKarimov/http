@@ -2,18 +2,12 @@ package main
 
 import (
 	"net"
+	"net/http"
 	"os"
 
-	"github.com/FaranushKarimov/http/pkg/server"
-	/* 	"fmt"
-	   	"log"
-	   	"strconv" */)
-
-const header = "HTTP/1.1 200 OK\r\n" +
-	"Content-Length: %s\r\n" +
-	"Content-Type: %s\r\n" +
-	"Connection: close\r\n" +
-	"\r\n"
+	"github.com/FaranushKarimov/http/cmd/app"
+	"github.com/FaranushKarimov/http/pkg/banners"
+)
 
 func main() {
 	host := "0.0.0.0"
@@ -24,19 +18,16 @@ func main() {
 	}
 }
 
-func execute(host, port string) (err error) {
-	srv := server.NewServer(net.JoinHostPort(host, port))
+func execute(h, p string) error {
+	mux := http.NewServeMux()
+	bnrSvc := banners.NewService()
 
-	/* srv.Register("/", func(conn net.Conn) {
-		body := "Welcome to our website"
-		ctl := strconv.Itoa(len(body))
-		log.Println(ctl)
-		_, err = conn.Write([]byte(fmt.Sprintf(header, ctl, "text/html") + body))
+	sr := app.NewServer(mux, bnrSvc)
+	sr.Init()
 
-		if err != nil {
-			log.Println(err)
-		}
-	}) */
-
-	return srv.Start()
+	srv := &http.Server{
+		Addr:    net.JoinHostPort(h, p),
+		Handler: sr,
+	}
+	return srv.ListenAndServe()
 }
